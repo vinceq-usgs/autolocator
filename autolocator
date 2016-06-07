@@ -1,0 +1,45 @@
+#! /bin/python3
+
+import argparse
+from modules import Db
+from modules import aggregate
+from modules import locate_dyfi
+
+MINENTRIES=5
+
+parser=argparse.ArgumentParser(
+  description='Check the extended table for unknown entries and attempt to locate them.'
+)
+parser.add_argument('--time',type=float,default=20,
+                    help='Time to look back (default 20 mins)')
+parser.add_argument('--start',type=str,
+                    help='Start time in the form "2016-01-01 00:00:00"')
+parser.add_argument('--end',type=str,
+                    help='End time in the form "2016-01-01 00:00:00"')
+parser.add_argument('--mail',type=str,default='default',
+                    help='Mail recipients if event is found')
+args=parser.parse_args()
+
+columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
+
+def main():
+  print('Looking back {} mins.'.format(args.time))
+  db=Db()
+ 
+  t0=db.timeago(args.time)
+  querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
+
+  if args.start and args.end:
+    querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
+  print(querytext)
+
+  geojson=db.query('cdi','latest',querytext)
+  if not geojson or len(geojson.features) < MINENTRIES:
+    print("Not enough entries found, stopping.")
+    exit()
+
+  aggregated=aggregate(geojson,1)
+  loc=locate_dyfi.locate(aggregated)
+  print(loc)
+
+main()
