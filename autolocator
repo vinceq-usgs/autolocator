@@ -4,7 +4,7 @@ import argparse
 from modules import Db
 from modules import aggregate
 from modules import locate_dyfi
-from modules import geoserve
+from modules import Geoserve
 
 MINENTRIES=5
 
@@ -31,6 +31,7 @@ def main():
     querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
 
     if args.start and args.end:
+        # NOTE: this includes associated entries
         querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
         print(querytext)
 
@@ -39,6 +40,7 @@ def main():
         print("Not enough entries found, stopping.")
         exit()
 
+    npts=len(geojson.features)
     aggregated=aggregate(geojson,1)
     loc=locate_dyfi.locate(aggregated)
     if not loc:
@@ -46,12 +48,15 @@ def main():
         exit()
     print(loc)
     mag=loc['properties']['mag']
-    if mag>9:
-        print("Bad autolocation (mag={}), stopping.".format(mag))
-        #exit()
+    resid=loc['properties']['resid']
     (lon,lat)=loc['geometry']['coordinates']
 
-    results=geoserve.getname(lat,lon)
-    print(results['name'])
+    results=Geoserve(lat,lon)
+    print(results)
+    print('Number of responses: '+str(npts))
+    if mag>8:
+        print('Derived magnitude '+mag+', location is suspect.')
+    if resid>1:
+        print('resid: '+resid+', location is suspect.')
 
 main()
