@@ -4,6 +4,7 @@ import argparse
 from modules import Db
 from modules import aggregate
 from modules import locate_dyfi
+from modules import geoserve
 
 MINENTRIES=5
 
@@ -23,23 +24,34 @@ args=parser.parse_args()
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
 def main():
-  print('Looking back {} mins.'.format(args.time))
-  db=Db()
+    print('Looking back {} mins.'.format(args.time))
+    db=Db()
  
-  t0=db.timeago(args.time)
-  querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
+    t0=db.timeago(args.time)
+    querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
 
-  if args.start and args.end:
-    querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
-  print(querytext)
+    if args.start and args.end:
+        querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
+        print(querytext)
 
-  geojson=db.query('cdi','latest',querytext)
-  if not geojson or len(geojson.features) < MINENTRIES:
-    print("Not enough entries found, stopping.")
-    exit()
+    geojson=db.query('cdi','latest',querytext)
+    if not geojson or len(geojson.features) < MINENTRIES:
+        print("Not enough entries found, stopping.")
+        exit()
 
-  aggregated=aggregate(geojson,1)
-  loc=locate_dyfi.locate(aggregated)
-  print(loc)
+    aggregated=aggregate(geojson,1)
+    loc=locate_dyfi.locate(aggregated)
+    if not loc:
+        print("No location found, stopping.")
+        exit()
+    print(loc)
+    mag=loc['properties']['mag']
+    if mag>9:
+        print("Bad autolocation (mag={}), stopping.".format(mag))
+        #exit()
+    (lon,lat)=loc['geometry']['coordinates']
+
+    results=geoserve.getname(lat,lon)
+    print(results['name'])
 
 main()
