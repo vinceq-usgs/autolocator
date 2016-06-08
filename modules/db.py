@@ -1,121 +1,183 @@
+#! /usr/local/bin/python3
+
 import mysql.connector
 import geojson
 import datetime
 import json
 
 class Db():
-  """
-Prototype database class for connecting to the MySQL database.
-
-  """
-
-  def __init__(self,inputfile='/home/shake/db.json'):
-
-    self.CDICOLUMNS=['subid','latitude','longitude','felt','other_felt','motion','reaction','stand','shelf','picture','furniture','damage']
-
-    
-    dbparams=json.load(open(inputfile))
-    EXT_MINYR=2003;
-    EXT_MAXYR=2016;
-
-    self.EXTTABLES=['extended_' + str(x) for x in
-      (['pre'] + list(range(EXT_MINYR,EXT_MAXYR+1)))]
-    self.TABLE_LATEST=self.EXTTABLES[-1]
-
-    connector=mysql.connector.connect(
-          user=dbparams['USER'],
-          password=dbparams['PASSWORD'],
-          database=dbparams['DATABASE'])
-    self.connector=connector
-    self.cursor=self.connector.cursor()
-
-  def query(self,columns,table,text):
     """
-The main interface for making database queries
+Interface for connecting to the MySQL database.
 
-columns: single column or comma-delimited string
-table: single table, list, or comma-delimited string
-text: text after WHERE in MySQL query
+Usage:
+    from db import Db
+    db=Db()
+    results=db.extquery(columns,table,querytext) : 
+        returns extended entries in geojson format.
+        columns : column name, or list of columns, or comma-delimited list, or
+            all : get all columns
+            cdi : get columns from db.CDICOLUMNS
+        table : table name, list of tables, or comma-delimited list, or
+            (blank) : all extended tables
+            latest : only the latest extended table
+        query : MySQL query text after 'WHERE'
+
+    results=db.query(columns,table,querytext) :
+        simpler version that returns a raw dict.
+        columns : column name or comma-delimited list
+        table : table name only
+        query : MySQL query text after 'WHERE'
+
+    db.connector : ref to MySQL connector
+    db.cursor : ref to MySQL cursor, for making custom queries
+    db.CDICOLUMNS : list of columns used for calculating CDI
+
+Requirements:
+    A dbconfigfile in JSON format with the following keys: USER,PASSWORD,DATABASE. The default lives in '/home/shake/db.json.'
 
     """
 
-    if not columns:
-      columns='count(*)'
-    elif columns=='cdi':
-      columns=','.join(self.CDICOLUMNS)
+    def __init__(self,dbconfigfile='/home/shake/db.json'):
 
-    template='SELECT '+columns+' FROM {!s} WHERE '+text
-    templatetotal='SELECT count(*) FROM {!s}'
+        self.allcolumns=['subid','eventid','orig_id','suspect','region','usertime','time_now','latitude','longitude','geo_source','zip','zip_4','city','admin_region','country','street','name','email','phone','situation','building','asleep','felt','other_felt','motion','duration','reaction','response','stand','sway','creak','shelf','picture','furniture','heavy_appliance','walls','slide_1_foot','d_text','damage','building_details','comments','user_cdi','city_latitude','city_longitude','city_population','zip_latitude','zip_longitude','location','tzoffset','confidence','version','citydb','cityid']
+        self.cdicolumns=['subid','latitude','longitude','felt','other_felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
-    if (not table) or (table=='extended'):
-      tables=self.EXTTABLES
-    elif table=='latest':
-      tables=[self.TABLE_LATEST]
-    elif ',' in table:
-      tables=table.split(',')
-    else:
-      tables=[table]
+        dbparams=json.load(open(dbconfigfile))
+        EXT_MINYR=2003;
+        EXT_MAXYR=2016;
 
-    results=[]
-    for table in tables:
-      result=self._querytable(table,template)
+        self.exttables=['extended_' + str(x) for x in
+            (['pre'] + list(range(EXT_MINYR,EXT_MAXYR+1)))]
+        self.latesttable=self.exttables[-1]
 
-      tableresult=[]
-      for rowdata in result:
-        rowresult={}
-        for column,datum in zip(columns.split(','),rowdata):
-          rowresult[column]=datum
-        tableresult.append(rowresult)
+        connector=mysql.connector.connect(
+            user=dbparams['USER'],
+            password=dbparams['PASSWORD'],
+            database=dbparams['DATABASE'])
+        self.connector=connector
+        self.cursor=self.connector.cursor(dictionary=True)
 
-      if tableresult:
-        results.append({table:tableresult})
+    def extquery(self,columns,table,text):
+        """
+The main API function for making extended database queries. Mostly a
+wrapper to query(), but converts output to geojson.
 
-    if results:
-      results=self.raw2geojson(results)       
-    return results
+    columns: single column, list, or comma-delimited string
+    table: single table, list, or comma-delimited string
+    text: text after WHERE in MySQL query
 
-  def _querytable(self,table,template):
-      querytext=template.format(table)
-      print("Query: "+querytext)
-      self.cursor.execute(querytext)
-      print("Done with query.")
-      thisresults=self.cursor.fetchall()
-      return thisresults
+        """
 
-  def timeago(self,t):
-    t0=datetime.datetime.now()
-    tdelta=datetime.timedelta(minutes=t)
-    tnew=t0-tdelta
-    return(tnew)
+        if not columns or columns=='all':
+            columns='*'
+        elif not isinstance(columns,str):
+            columns=','.join(columns)
+        elif columns=='cdi':
+            columns=','.join(self.CDICOLUMNS)
 
-  def raw2geojson(self,raw):
-    features=[]
-    for table in raw[0]:
-      for row in raw[0][table]:
+        if not table or table=='extended' or table=='all':
+            tables=self.exttables
+        elif table=='latest':
+            tables=[self.latesttable]
+        elif ',' in table:
+            tables=table.split(',')
+        else:
+            tables=[table]
+
+        results=[]
+        for table in tables:
+            result=self.query(table,columns,text)
+            for rowdata in result:
+                rowgeojson=self.row2geojson(rowdata)
+                if not rowgeojson:
+                    continue
+                rowgeojson['properties']['table']=table
+                results.append(rowgeojson)
+       
+        print('Done with extquery, returning.')
+        return results
+
+    def query(self,table,column,text):
+        """
+Simpler MySQL query. The parameters table and column must be strings.
+
+        """
+        template='SELECT '+column+' FROM '+table+' WHERE '+text
+        print('template='+template)
+        results=self.rawquery(template)
+        return results
+
+    def rawquery(self,text):
+        """
+Simplest MySQL query with the raw query string, no formatting.
+
+        """
+        print("Query: "+text)
+        self.cursor.execute(text)
+        results=self.cursor.fetchall()
+        return results
+
+    def timeago(self,t):
+        t0=datetime.datetime.now()
+        tdelta=datetime.timedelta(minutes=t)
+        tnew=t0-tdelta
+        return(tnew)
+
+    def row2geojson(self,row):
         lat=row['latitude']
         lon=row['longitude']
+        if not lat or not lon:
+            print('Unable to get lat/lon for this row')
+            return
         pt=geojson.Point((lon,lat))
         props={}
-        for col in self.CDICOLUMNS:
-          if col=='latitude' or col=='longitude':
-            continue
+        for key,val in row.items():
+            if key=='latitude' or key=='longitude':
+                continue
+            newval=val
+            if val=='null' or val=='': 
+                newval=None
+            if (key in self.cdicolumns and 
+                isinstance(newval,str) and 
+                ' ' in newval):
+                newval=val.split(' ')
+                newval=newval[0]
+                if isinstance(newval,str):
+                    newval=float(newval)
 
-          val=row[col]
-          newval=val
-          if val=='null': newval=None
-          elif isinstance(newval,str) and (' ' in val): 
-            newval=newval.split(' ')
-            newval=newval[0]
-
-          if isinstance(newval,str):
-            newval=int(newval)
- 
-          props[col]=newval
- 
+            props[key]=newval
         feature=geojson.Feature(geometry=pt,properties=props)
-        features.append(feature)
+        return(feature)
 
-    output=geojson.FeatureCollection(features)
-    return(output)
+if __name__=='__main__':
+    import argparse
+    parser=argparse.ArgumentParser(
+        description='Access the DYFI MySQL database.'
+    )
+    parser.add_argument('--extended',type=str,nargs='?',
+        help="Extended query with geojson output")
+    parser.add_argument('query',type=str,nargs='?',
+        help="MySQL query (raw query, if no --extended)")
+    args=parser.parse_args()
 
- 
+    db=Db()
+    if args.extended:
+        if not args.query:
+            args.query=args.extended
+            args.extended=True
+
+        table='all'
+        if isinstance(args.extended,str):
+            table=args.extended
+        results=db.extquery('*',table,args.query)
+        for row in results:
+            print(row.properties['table']+':'+str(row.properties['subid']))
+        exit()
+
+    else:
+        results=db.rawquery(args.query)
+
+    print(results)
+
+
+
