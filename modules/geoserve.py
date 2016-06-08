@@ -4,26 +4,34 @@ import argparse
 from urllib import request
 import json
 
-"""
-A module to access the USGS Geoserve Places Service.
+class Geoserve():
+    """
+A module to access the USGS Geoserve Places Service, 
+earthquake.usgs.gov/ws/geoserve.
 
 Usage:
-    From the command line, geosoerve.py lat lon [gettype]
+    From the command line, geoserve.py lat lon [gettype]
     Or call from module:
-        import geoserve
-        resultsdict=geoserve.getname(lat,lon[,gettype])
+        from geoserve import Geoserve
+        geo=Geoserve(lat,lon)
 
-Results:
+        print(geo) : returns string version of preferred name
+        geo.availabletypes : list of datatypes with data (see below)
+        geo.getname : returns string version of preferred name
+        geo.lat,geo.lon : store input lat/lon
+        geo.names : list of raw output by datatype
+        geo.preferredtype: type used for preferred name
+        geo.raw : stores raw output from server
+        geo.url : stores URL for Geoserve (including parameters)
 
-    The server earthquake.usgs.gov/ws/geoserve gives different properties depending on gettype. If not specified, it will try 'admin', then 'fe'. 
+    """
 
-    admin: iso [country code e.g. USA],country,region [e.g. California]
-    fe: name,number
+    RAWURL='http://earthquake.usgs.gov/ws/geoserve/regions.json?latitude={}&longitude={}'
 
-"""
-
-RAWURL='http://earthquake.usgs.gov/ws/geoserve/regions.json?latitude={}&longitude={}'
-GOODPRODUCTTYPES=[
+    """
+GOODPRODUCTTYPES is a list of acceptable producttypes that can be used to build a stringified location name. The module will iterate through the typenames in order until it finds one with an existing proplist, and concatenates those values.  
+    """
+    GOODPRODUCTTYPES=[
         {
             'typename':'admin',
             'proplist':['region','country']
@@ -32,46 +40,58 @@ GOODPRODUCTTYPES=[
             'typename':'fe',
             'proplist':['name']
         }
-]
+    ]
 
-def getname(lat,lon,gettype=''):
-    url=RAWURL.format(lat,lon,gettype)
-    producttypes=GOODPRODUCTTYPES
-    if gettype:
-        url+='&type={}'.format(gettype)
-        producttypes=[x for x in GOODPRODUCTTYPES if x['typename']==gettype]
-        if not producttypes:
-            print('WARNING: Unknown product type '+gettype)
+    def __init__(self,lat,lon):
+        self.lat=lat
+        self.lon=lon
+        self.url=self.RAWURL.format(lat,lon)
+
+        fh=request.urlopen(self.url)
+        data=fh.read().decode('utf8')
+        results=json.loads(data)
+        if not results:
+            print('WARNING: No results found (no connection?)')
             return
-    
-    print('Accessing URL: '+url)
-    fh=request.urlopen(url)
-    data=fh.read().decode('utf8')
-    fh.close
+        fh.close
+        self.raw=results
 
-    results=json.loads(data)
-    if not results:
-        print('WARNING: No results found (no connection?)')
-        return
+        if not self.raw:
+            return
 
-    name=''
-    raw=''
-    for parse in producttypes:
-        typename=parse['typename']
-        if typename in results:
-            features=results[typename]['features']
+        typelist=[x['typename'] for x in self.GOODPRODUCTTYPES]
+        self.names={}
+        self.preferredtype=''
+        self.availabletypes=[]
+
+        for typename in typelist:
+            if not typename in self.raw:
+                continue
+            features=self.raw[typename]['features']
             if not features:
                 continue
             props=features[0]['properties']
-            featurelist=[props[x] for x in parse['proplist']]
-            name=', '.join(featurelist)
-            break
+            if not props:
+                continue
+            self.availabletypes.append(typename)
+            self.names[typename]=props
+            if not self.preferredtype:
+                self.preferredtype=typename
 
-    if not name:
-        print('WARNING: No results found (bad location?)')
-        return
+    def getname(self):
+        typename=self.preferredtype
+        keylist=[x['proplist'] for x in self.GOODPRODUCTTYPES
+                if x['typename']==typename][0]
+        proplist=self.names[typename]
+        return(', '.join([proplist[x] for x in keylist]))
 
-    return({'raw':results,'name':name})
+    def __str__(self):
+        if hasattr(self,'name'):
+            return(self.name)
+        return(self.getname())
+
+"""
+"""
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(
@@ -85,14 +105,7 @@ if __name__=='__main__':
         help='Data type to query')
 
     args=parser.parse_args()
-    results=getname(args.lat,args.lon,args.gettype)
-    print(results['name'])
 
-
-
-
-
-
-
-  
+    geo=Geoserve(args.lat,args.lon)
+    print(geo)
 
