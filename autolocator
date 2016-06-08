@@ -52,11 +52,11 @@ def main():
     (lon,lat)=loc['geometry']['coordinates']
 
     results=Geoserve(lat,lon)
-    print(results)
+    print('Location: '+str(results))
     print('Number of responses: '+str(npts))
     if mag>8:
-        print('Derived magnitude '+mag+', location is suspect.')
+        print('Derived magnitude M{}, location is suspect.'.format(mag))
     if resid>1:
-        print('resid: '+resid+', location is suspect.')
+        print('resid={}, location is suspect.'.format(resid))
 
 main()
