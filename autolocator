@@ -5,6 +5,7 @@ from modules import Db
 from modules import aggregate
 from modules import locate_dyfi
 from modules import Geoserve
+from modules import mail
 
 MINENTRIES=5
 
@@ -17,7 +18,7 @@ parser.add_argument('--start',type=str,
                     help='Start time in the form "2016-01-01 00:00:00"')
 parser.add_argument('--end',type=str,
                     help='End time in the form "2016-01-01 00:00:00"')
-parser.add_argument('--mail',type=str,default='default',
+parser.add_argument('--mail',type=str,nargs='?',const=True,
                     help='Mail recipients if event is found')
 args=parser.parse_args()
 
@@ -46,17 +47,29 @@ def main():
     if not loc:
         print("No location found, stopping.")
         exit()
-    print(loc)
+
     mag=loc['properties']['mag']
     resid=loc['properties']['resid']
     (lon,lat)=loc['geometry']['coordinates']
 
     results=Geoserve(lat,lon)
-    print('Location: '+str(results))
-    print('Number of responses: '+str(npts))
+    out='Location: '+str(results)+'\n'
+    out+='Number of responses: '+str(npts)+'\n'
     if mag>8:
-        print('Derived magnitude M{}, location is suspect.'.format(mag))
+        out+='Derived magnitude M{}, location is suspect.'.format(mag)+'\n'
     if resid>1:
-        print('resid={}, location is suspect.'.format(resid))
+        out+='resid={}, location is suspect.'.format(resid)+'\n'
+
+    print('Results:')
+    print(out)
+
+    if args.mail:
+        msg={'subject':'DYFI Autolocator','text':out}
+        if isinstance(args.mail,str):
+            msg['to']=args.mail
+            print('Mailing to '+args.mail)
+        else:
+            print('Mailing to default operator.')
+        mail.dyfimail(msg)
 
 main()
