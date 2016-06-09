@@ -24,7 +24,7 @@ Usage:
     if 'subject' in p:
         msgsubj=p['subject']
     if 'to' in p:
-        msgto=p['To']
+        msgto=p['to']
 
     """
     msg=MIMEText(p['text'])
