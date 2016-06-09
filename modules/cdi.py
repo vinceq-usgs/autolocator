@@ -24,8 +24,17 @@ def calculate(pts):
             p=pt['properties']
             if index not in p: continue
             if p[index] is None: continue
-            total += p[index]
-            num += 1
+            val=p[index]
+            print(index+'='+str(val))
+            try:
+                val=float(val)
+            except:
+                if ' ' in val:
+                    val=val.split(' ')[0]
+                print('CHANGING TO '+val)
+                val=float(val)
+            total+=val
+            num+=1
         
         if num: byindex[index]=total/num
 

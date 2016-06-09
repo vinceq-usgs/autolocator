@@ -73,7 +73,7 @@ wrapper to query(), but converts output to geojson.
         elif not isinstance(columns,str):
             columns=','.join(columns)
         elif columns=='cdi':
-            columns=','.join(self.CDICOLUMNS)
+            columns=','.join(self.cdicolumns)
 
         if not table or table=='extended' or table=='all':
             tables=self.exttables
@@ -93,9 +93,10 @@ wrapper to query(), but converts output to geojson.
                     continue
                 rowgeojson['properties']['table']=table
                 results.append(rowgeojson)
-       
+      
+        fc=geojson.FeatureCollection(results)
         print('Done with extquery, returning.')
-        return results
+        return fc 
 
     def query(self,table,column,text):
         """
@@ -134,18 +135,9 @@ Simplest MySQL query with the raw query string, no formatting.
         for key,val in row.items():
             if key=='latitude' or key=='longitude':
                 continue
-            newval=val
             if val=='null' or val=='': 
-                newval=None
-            if (key in self.cdicolumns and 
-                isinstance(newval,str) and 
-                ' ' in newval):
-                newval=val.split(' ')
-                newval=newval[0]
-                if isinstance(newval,str):
-                    newval=float(newval)
-
-            props[key]=newval
+                val=None
+            props[key]=val
         feature=geojson.Feature(geometry=pt,properties=props)
         return(feature)
 
