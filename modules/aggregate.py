@@ -13,8 +13,8 @@ aggreagate.py :  Module to take GeoJSON feature collection and return
 
 import math
 import geojson
-from utm import OutOfRangeError,to_latlon,from_latlon
-import cdi
+from modules.utm import OutOfRangeError,to_latlon,from_latlon
+import modules.cdi as cdi
 
 PRECISION=4
 
@@ -56,7 +56,6 @@ def aggregate(featurecollection,resolution):
             
     results=[]
     for loc,pts in rawresults.items():
-
         intensity=cdi.calculate(pts)
                         
         # geom=getBoundingPolygon(loc,resolutionMeters)        
