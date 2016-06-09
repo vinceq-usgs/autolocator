@@ -35,7 +35,7 @@ def main():
         querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
         print(querytext)
 
-    geojson=db.query('cdi','latest',querytext)
+    geojson=db.extquery('cdi','latest',querytext)
     if not geojson or len(geojson.features) < MINENTRIES:
         print("Not enough entries found, stopping.")
         exit()
