@@ -13,7 +13,7 @@ import math
 cdiIndices={'felt':5,'motion':1,'reaction':1,'stand':2,
               'shelf':5,'picture':2,'furniture':3,'damage':5}
 
-def calculate(pts):
+def calculate(pts,verbose=False):
 
     byindex={} 
     
@@ -25,13 +25,15 @@ def calculate(pts):
             if index not in p: continue
             if p[index] is None: continue
             val=p[index]
-            print(index+'='+str(val))
+            if verbose:
+              print(index+'='+str(val))
             try:
                 val=float(val)
             except:
                 if ' ' in val:
                     val=val.split(' ')[0]
-                print('CHANGING TO '+val)
+                if verbose:
+                    print('CHANGING TO '+val)
                 val=float(val)
             total+=val
             num+=1
