@@ -17,7 +17,7 @@ Usage:
 
     """
 
-    msgsubj='DYFI Alert'
+    msgsubj='DYFI Autolocator Alert'
     msgfrom=FROM
     msgto=DEFAULT_RECIPIENT
 
