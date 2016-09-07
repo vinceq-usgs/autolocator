@@ -1,13 +1,12 @@
 #! /bin/python3
 
 import argparse
-from modules import Db
-from modules import aggregate
+from modules.db import Db
+from modules.aggregate import aggregate
 from modules import locate_dyfi
-from modules import Geoserve
+from modules.geoserve.regions import Regions
+from modules.geoserve.places import Places
 from modules import mail
-
-MINENTRIES=5
 
 parser=argparse.ArgumentParser(
   description='Check the extended table for unknown entries and attempt to locate them.'
@@ -20,29 +19,44 @@ parser.add_argument('--end',type=str,
                     help='End time in the form "2016-01-01 00:00:00"')
 parser.add_argument('--mail',type=str,nargs='?',const=True,
                     help='Mail recipients if event is found')
+parser.add_argument('--minresp',type=int,default=5,
+                    help='Minimum no. of responses for detection')
 args=parser.parse_args()
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
 def main():
-    print('Looking back {} mins.'.format(args.time))
     db=Db()
  
-    t0=db.timeago(args.time)
-    querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
-
     if args.start and args.end:
-        # NOTE: this includes associated entries
+        print('Window specified. This will include associated entries.')
         querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
-        print(querytext)
 
+    elif args.start:
+        print('Start time specified. This will include associated entries.')
+        t1=db.timedelta(args.time,args.start)
+        querytext='time_now>"{}" and time_now<"{}"'.format(args.start,t1)
+
+    elif args.end:
+        print('End time specified. This will include associated entries.')
+        t0=db.timedelta(args.time*(-1),args.end)
+        querytext='time_now>"{}" and time_now<"{}"'.format(t0,args.end)
+
+    else:
+        print('Looking back {} mins.'.format(args.time))
+        t0=db.timedelta(args.time)
+        querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
+
+    print(querytext)
     geojson=db.extquery('cdi','latest',querytext)
-    if not geojson or len(geojson.features) < MINENTRIES:
-        print("Not enough entries found, stopping.")
+    nresp=len(geojson.features) 
+    if not geojson or nresp<args.minresp:
+        print("Only found %i entries. Stopping." % nresp)
         exit()
 
     npts=len(geojson.features)
     aggregated=aggregate(geojson,1)
+    nlocs=len(aggregated)
     loc=locate_dyfi.locate(aggregated)
     if not loc:
         print("No location found, stopping.")
@@ -52,13 +66,16 @@ def main():
     resid=loc['properties']['resid']
     (lon,lat)=loc['geometry']['coordinates']
 
-    results=Geoserve(lat,lon)
-    out='Location: '+str(results)+'\n'
-    out+='Number of responses: '+str(npts)+'\n'
-    if mag>8:
-        out+='Derived magnitude M{}, location is suspect.'.format(mag)+'\n'
-    if resid>1:
-        out+='resid={}, location is suspect.'.format(resid)+'\n'
+    region=Regions(lat,lon)
+    places=Places(lat,lon)
+
+    out='lat=%s lon=%s\n' % (lat,lon)
+    out+='mag=%s nresp=%s nlocs=%s resid=%s\n' % (mag,nresp,nlocs,resid)
+    out+='loc=%s\nnearest=%s\nlargest=%s\n' % (
+            region,places.nearest,places.largest)
+
+    if resid>2:
+        out+='Location and magnitude suspect.\n'
 
     print('Results:')
     print(out)
