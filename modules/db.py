@@ -9,9 +9,12 @@ class Db():
     """
 Interface for connecting to the MySQL database.
 
+Requirements:
+    A dbconfigfile in JSON format with the following keys: USER,PASSWORD,DATABASE. The default lives in '/home/shake/db.json.' Otherwise, specify the location when calling Db().
+
 Usage:
     from db import Db
-    db=Db()
+    db=Db([configfile.json])
     results=db.extquery(columns,table,querytext) : 
         returns extended entries in geojson format.
         columns : column name, or list of columns, or comma-delimited list, or
@@ -30,10 +33,9 @@ Usage:
 
     db.connector : ref to MySQL connector
     db.cursor : ref to MySQL cursor, for making custom queries
-    db.CDICOLUMNS : list of columns used for calculating CDI
+    db.allcolumns : list of all columns in the database
+    db.cdicolumns : list of columns used for calculating CDI
 
-Requirements:
-    A dbconfigfile in JSON format with the following keys: USER,PASSWORD,DATABASE. The default lives in '/home/shake/db.json.'
 
     """
 
@@ -104,7 +106,6 @@ Simpler MySQL query. The parameters table and column must be strings.
 
         """
         template='SELECT '+column+' FROM '+table+' WHERE '+text
-        print('template='+template)
         results=self.rawquery(template)
         return results
 
@@ -118,10 +119,21 @@ Simplest MySQL query with the raw query string, no formatting.
         results=self.cursor.fetchall()
         return results
 
-    def timeago(self,t):
-        t0=datetime.datetime.now()
+    def timedelta(self,t,t0=None):
+        if t0:
+            t0=datetime.datetime.strptime(t0,'%Y-%m-%d %H:%M:%S')
+        else:
+            t0=datetime.datetime.now()
+            t0=t0.replace(microsecond=0)
+
         tdelta=datetime.timedelta(minutes=t)
-        tnew=t0-tdelta
+        """"
+        if reverse:
+            tnew=t0+tdelta
+        else:
+            tnew=t0-tdelta
+        """
+        tnew=t0+tdelta
         return(tnew)
 
     def row2geojson(self,row):
