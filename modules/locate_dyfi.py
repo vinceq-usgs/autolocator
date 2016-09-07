@@ -21,6 +21,7 @@ from geopy.distance import great_circle
 
 from modules import ipes
 
+VER='0.2'
 # Resid type A = residuals of intensities at each observation
 # Resid type B = residuals of magnitudes at each observation
 RESID_TYPE = 'B'
