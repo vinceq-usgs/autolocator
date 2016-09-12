@@ -21,11 +21,31 @@ parser.add_argument('--mail',type=str,nargs='?',const=True,
                     help='Mail recipients if event is found')
 parser.add_argument('--minresp',type=int,default=5,
                     help='Minimum no. of responses for detection')
+parser.add_argument('--force',action='store_true',
+                    help='Minimum no. of responses for detection')
 args=parser.parse_args()
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
+
+def checkfilter(mag,nresp,nlocs,resid):
+    if mag<=5 and resid<1:
+        return True
+    if resid>2.5:
+        return False
+    if mag>9 and nresp<100:
+        return False
+    if mag>7 and nresp<50:
+        return False
+    if mag>6 and nresp<30:
+        return False
+    if mag>5.5 and nresp<20:
+        return False
+    return True
+
+
 def main():
+    good=True
     db=Db()
  
     if args.start and args.end:
@@ -44,7 +64,7 @@ def main():
 
     else:
         print('Looking back {} mins.'.format(args.time))
-        t0=db.timedelta(args.time)
+        t0=db.timedelta(args.time*(-1))
         querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
 
     print(querytext)
@@ -69,13 +89,21 @@ def main():
     region=Regions(lat,lon)
     places=Places(lat,lon)
 
-    out='lat=%s lon=%s\n' % (lat,lon)
-    out+='mag=%s nresp=%s nlocs=%s resid=%s\n' % (mag,nresp,nlocs,resid)
-    out+='loc=%s\nnearest=%s\nlargest=%s\n' % (
+    out='loc=%s\nnearest=%s\nlargest=%s\n' % (
             region,places.nearest,places.largest)
+    out+='lat=%s lon=%s\n' % (lat,lon)
+    out+='mag=%s nresp=%s nlocs=%s resid=%s\n' % (mag,nresp,nlocs,resid)
 
     if resid>2:
         out+='Location and magnitude suspect.\n'
+
+    if not args.force:
+        check=checkfilter(mag,nresp,nlocs,resid)
+        if not check:
+            good=False
+
+    if not good:
+        out+='Suspect location, diagnostic only.'
 
     print('Results:')
     print(out)
@@ -84,9 +112,12 @@ def main():
         msg={'subject':'DYFI Autolocator','text':out}
         if isinstance(args.mail,str):
             msg['to']=args.mail
-            print('Mailing to '+args.mail)
-        else:
-            print('Mailing to default operator.')
+
+        if not good:
+            msg['subject']='DYFI Autolocator (suspect)'
+            msg['to']='vinceq@usgs.gov'
+
+        print('Mailing to',msg['to'])
         mail.dyfimail(msg)
 
 main()
