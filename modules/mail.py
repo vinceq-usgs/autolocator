@@ -33,7 +33,7 @@ Usage:
     print('Sending:')
     print(msg)
 
-    s=smtplib.SMTP('smtp.usgs.gov')
+    s=smtplib.SMTP(config.mail['smtp'])
     s.set_debuglevel(1)
     s.send_message(msg)
     print(s)
@@ -42,7 +42,7 @@ Usage:
 
     from subprocess import Popen,PIPE
     mailer=Popen(
-            ['/bin/mail','-s',msgsubj,msgto],
+            [config.mail['mailbin'],'-s',msgsubj,msgto],
             stdin=PIPE,universal_newlines=True
             )
     mailer.communicate(p['text'])

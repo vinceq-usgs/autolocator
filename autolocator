@@ -115,7 +115,7 @@ def main():
 
         if not good:
             msg['subject']='DYFI Autolocator (suspect)'
-            msg['to']='vinceq@usgs.gov'
+            msg['to']=config.mail['operator']
 
         print('Mailing to',msg['to'])
         mail.dyfimail(msg)
