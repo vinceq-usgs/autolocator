@@ -47,7 +47,12 @@ GOODPRODUCTTYPES is a list of acceptable producttypes that can be used to build 
         self.lon=lon
         self.url=self.RAWURL.format(lat,lon)
 
-        fh=request.urlopen(self.url)
+        try:
+            fh=request.urlopen(self.url)
+        except:
+            print('Failed URL:',self.url)
+            raise
+
         data=fh.read().decode('utf8')
         results=json.loads(data)
         if not results:
