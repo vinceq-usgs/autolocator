@@ -3,9 +3,11 @@
 import argparse
 from modules.db import Db
 from modules.aggregate import aggregate
-from modules import locate_dyfi
 from modules.geoserve.regions import Regions
 from modules.geoserve.places import Places
+
+from modules.config import config
+from modules import locate_dyfi
 from modules import mail
 
 parser=argparse.ArgumentParser(
@@ -23,6 +25,8 @@ parser.add_argument('--minresp',type=int,default=5,
                     help='Minimum no. of responses for detection')
 parser.add_argument('--force',action='store_true',
                     help='Minimum no. of responses for detection')
+parser.add_argument('--test',action='store_true',
+                    help='Testing regime')
 args=parser.parse_args()
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
@@ -70,13 +74,32 @@ def main():
     print(querytext)
     geojson=db.extquery('cdi','latest',querytext)
     nresp=len(geojson.features) 
-    if not geojson or nresp<args.minresp:
-        print("Only found %i entries. Stopping." % nresp)
+
+    if not geojson or nresp==0:
+        print("No entries found. Stopping.")
         exit()
 
     npts=len(geojson.features)
     aggregated=aggregate(geojson,1)
     nlocs=len(aggregated)
+
+    entriesout='Response locations:\n'
+    counter=0
+    for loc in aggregated:
+        counter+=1
+        (lon,lat)=loc['geometry']['coordinates']
+        region=Regions(lat,lon)
+        entrytext='%s: %s\n' % (counter,region)
+        entriesout+=entrytext
+
+        if counter>=10 and nlocs>counter:
+            entriesout+='(%s more...)\n' % (nlocs-counter)
+            break
+
+    if nresp<args.minresp:
+        print("Only %s entries found. Stopping." % nresp)
+        exit()
+
     loc=locate_dyfi.locate(aggregated)
     if not loc:
         print("No location found, stopping.")
@@ -105,6 +128,7 @@ def main():
     if not good:
         out+='Suspect location, diagnostic only.'
 
+    out+=entriesout
     print('Results:')
     print(out)
 
@@ -117,7 +141,6 @@ def main():
             msg['subject']='DYFI Autolocator (suspect)'
             msg['to']=config.mail['operator']
 
-        print('Mailing to',msg['to'])
         mail.dyfimail(msg)
 
 main()
