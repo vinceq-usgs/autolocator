@@ -41,6 +41,8 @@ Usage:
     """
 
     from subprocess import Popen,PIPE
+    print('Mailer:subj:',msgsubj)
+    print('Mailer:to:',msgto)
     mailer=Popen(
             [config.mail['mailbin'],'-s',msgsubj,msgto],
             stdin=PIPE,universal_newlines=True
