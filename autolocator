@@ -48,10 +48,52 @@ def checkfilter(mag,nresp,nlocs,resid):
     return True
 
 
+def displayEntries(aggregated):
+
+    # Collate responses for diagnostic output
+
+    def customSort(loc):
+        cdi=loc['properties']['cdi']
+        nresp=loc['properties']['nresp']
+        score=cdi+nresp/10
+
+        return score
+
+    sortedlocs=sorted(aggregated,key=customSort,reverse=True)
+    sortedlocs=sortedlocs[0:10]
+
+    entriestext='Responses:'
+    print('Getting location data from Geoserve...')
+
+    for loc in sortedlocs:
+        (lon,lat)=loc['geometry']['coordinates']
+        cdi=loc['properties']['cdi']
+        nresp=loc['properties']['nresp']
+        try:
+            region=Regions(lat,lon)
+        except:
+            print('WARNING: Regions failed (Geoserve or network error?)')
+            region='(%s,%s)' % (lat,lon)
+
+        entriestext+='%s (i=%s, nresp=%s)\n' % (region,cdi,nresp)
+
+    print('Done with Geoserve.')
+
+    nlocs=len(aggregated)
+    nsorted=len(sortedlocs)
+    print('nlocs:',nlocs,'nsorted:',nsorted)
+
+    if nlocs>nsorted:
+        entriestext+='(%s more...)\n' % (nlocs-nsorted)
+
+    return entriestext
+
 def main():
     good=True
     db=Db()
- 
+
+    # Setup query from CLI
+
     if args.start and args.end:
         print('Window specified. This will include associated entries.')
         querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
@@ -71,6 +113,8 @@ def main():
         t0=db.timedelta(args.time*(-1))
         querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
 
+    # Now query and aggregate
+
     print(querytext)
     geojson=db.extquery('cdi','latest',querytext)
     nresp=len(geojson.features) 
@@ -83,34 +127,33 @@ def main():
     aggregated=aggregate(geojson,1)
     nlocs=len(aggregated)
 
-    entriesout='Response locations:\n'
-    counter=0
-    for loc in aggregated:
-        counter+=1
-        (lon,lat)=loc['geometry']['coordinates']
-        region=Regions(lat,lon)
-        entrytext='%s: %s\n' % (counter,region)
-        entriesout+=entrytext
-
-        if counter>=10 and nlocs>counter:
-            entriesout+='(%s more...)\n' % (nlocs-counter)
-            break
+    entriestext=displayEntries(aggregated)
 
     if nresp<args.minresp:
         print("Only %s entries found. Stopping." % nresp)
+        print(entriestext)
         exit()
 
+    print('Locating.')
     loc=locate_dyfi.locate(aggregated)
+    print('Done locating.')
+
     if not loc:
         print("No location found, stopping.")
+        print(entriestext)
         exit()
+
+    # Create display message
 
     mag=loc['properties']['mag']
     resid=loc['properties']['resid']
     (lon,lat)=loc['geometry']['coordinates']
 
+    print('Getting Regions from Geoserve.')
     region=Regions(lat,lon)
+    print('Getting Places from Geoserve.')
     places=Places(lat,lon)
+    print('Done.')
 
     out='loc=%s\nnearest=%s\nlargest=%s\n' % (
             region,places.nearest,places.largest)
@@ -126,9 +169,10 @@ def main():
             good=False
 
     if not good:
-        out+='Suspect location, diagnostic only.'
+        out+='Suspect location, diagnostic only.\n'
 
-    out+=entriesout
+    out+=entriestext
+
     print('Results:')
     print(out)
 
@@ -141,6 +185,8 @@ def main():
             msg['subject']='DYFI Autolocator (suspect)'
             msg['to']=config.mail['operator']
 
+        print('Sending mail.')
         mail.dyfimail(msg)
+        print('Done sending.')
 
 main()
