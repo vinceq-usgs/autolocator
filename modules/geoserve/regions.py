@@ -4,16 +4,16 @@ import argparse
 from urllib import request
 import json
 
-class Geoserve():
+class Regions():
     """
-A module to access the USGS Geoserve Places Service, 
-earthquake.usgs.gov/ws/geoserve.
+A module to access the USGS Geoserve Regions Service, 
+earthquake.usgs.gov/ws/geoserve/regions.php.
 
 Usage:
-    From the command line, geoserve.py lat lon [gettype]
+    From the command line, regions.py lat lon [gettype]
     Or call from module:
-        from geoserve import Geoserve
-        geo=Geoserve(lat,lon)
+        from modules.geoserve.names import Regions
+        geo=Regions(lat,lon)
 
         print(geo) : returns string version of preferred name
         geo.availabletypes : list of datatypes with data (see below)
@@ -47,7 +47,12 @@ GOODPRODUCTTYPES is a list of acceptable producttypes that can be used to build 
         self.lon=lon
         self.url=self.RAWURL.format(lat,lon)
 
-        fh=request.urlopen(self.url)
+        try:
+            fh=request.urlopen(self.url)
+        except:
+            print('Failed URL:',self.url)
+            raise
+
         data=fh.read().decode('utf8')
         results=json.loads(data)
         if not results:
@@ -95,7 +100,7 @@ GOODPRODUCTTYPES is a list of acceptable producttypes that can be used to build 
 
 if __name__=='__main__':
     parser=argparse.ArgumentParser(
-        description='Check the extended table for unknown entries and attempt to locate them.'
+        description='Get a geoserve name given lat/lon coordinates.'
     )
     parser.add_argument('lat',type=float,
         help='Latitude')
@@ -106,6 +111,6 @@ if __name__=='__main__':
 
     args=parser.parse_args()
 
-    geo=Geoserve(args.lat,args.lon)
+    geo=Regions(args.lat,args.lon)
     print(geo)
 

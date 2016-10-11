@@ -3,8 +3,7 @@
 import smtplib
 from email.mime.text import MIMEText
 
-FROM='vinceq@usgs.gov'
-DEFAULT_RECIPIENT='vinceq@usgs.gov'
+from modules.config import config
 
 def dyfimail(p):
     """
@@ -17,9 +16,9 @@ Usage:
 
     """
 
-    msgsubj='DYFI Alert'
-    msgfrom=FROM
-    msgto=DEFAULT_RECIPIENT
+    msgsubj='DYFI Autolocator Alert'
+    msgfrom=config.mail['operator']
+    msgto=config.mail['to']
 
     if 'subject' in p:
         msgsubj=p['subject']
@@ -34,7 +33,7 @@ Usage:
     print('Sending:')
     print(msg)
 
-    s=smtplib.SMTP('smtp.usgs.gov')
+    s=smtplib.SMTP(config.mail['smtp'])
     s.set_debuglevel(1)
     s.send_message(msg)
     print(s)
@@ -42,13 +41,14 @@ Usage:
     """
 
     from subprocess import Popen,PIPE
+    print('Mailer:subj:',msgsubj)
+    print('Mailer:to:',msgto)
     mailer=Popen(
-            ['/bin/mail','-s',msgsubj,msgto],
+            [config.mail['mailbin'],'-s',msgsubj,msgto],
             stdin=PIPE,universal_newlines=True
             )
     mailer.communicate(p['text'])
-    
-    print(mailer)
+
 
 if __name__=='__main__':
     import argparse

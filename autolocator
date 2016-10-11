@@ -1,9 +1,11 @@
 #! /usr/bin/env python3
 
 import argparse
-from modules import Db,aggregate,locate_dyfi,Geoserve,mail,Plot
 
-MINENTRIES=5
+from modules import Db,aggregate,locate_dyfi,Geoserve,mail,Plot
+from modules.geoserve.regions import Regions
+from modules.geoserve.places import Places
+from modules.config import config
 
 parser=argparse.ArgumentParser(
   description='Check the extended table for unknown entries and attempt to locate them.'
@@ -16,45 +18,157 @@ parser.add_argument('--end',type=str,
                     help='End time in the form "2016-01-01 00:00:00"')
 parser.add_argument('--mail',type=str,nargs='?',const=True,
                     help='Mail recipients if event is found')
+parser.add_argument('--minresp',type=int,default=5,
+                    help='Minimum no. of responses for detection')
+parser.add_argument('--force',action='store_true',
+                    help='Minimum no. of responses for detection')
+parser.add_argument('--test',action='store_true',
+                    help='Testing regime')
 args=parser.parse_args()
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
+
+def checkfilter(mag,nresp,nlocs,resid):
+    if mag<=5 and resid<1:
+        return True
+    if resid>2.5:
+        return False
+    if mag>9 and nresp<100:
+        return False
+    if mag>7 and nresp<50:
+        return False
+    if mag>6 and nresp<30:
+        return False
+    if mag>5.5 and nresp<20:
+        return False
+    return True
+
+
+def displayEntries(aggregated):
+
+    # Collate responses for diagnostic output
+
+    def customSort(loc):
+        cdi=loc['properties']['cdi']
+        nresp=loc['properties']['nresp']
+        score=cdi+nresp/10
+
+        return score
+
+    sortedlocs=sorted(aggregated,key=customSort,reverse=True)
+    sortedlocs=sortedlocs[0:10]
+
+    entriestext='Responses:'
+    print('Getting location data from Geoserve...')
+
+    for loc in sortedlocs:
+        (lon,lat)=loc['geometry']['coordinates']
+        cdi=loc['properties']['cdi']
+        nresp=loc['properties']['nresp']
+        try:
+            region=Regions(lat,lon)
+        except:
+            print('WARNING: Regions failed (Geoserve or network error?)')
+            region='(%s,%s)' % (lat,lon)
+
+        entriestext+='%s (i=%s, nresp=%s)\n' % (region,cdi,nresp)
+
+    print('Done with Geoserve.')
+
+    nlocs=len(aggregated)
+    nsorted=len(sortedlocs)
+    print('nlocs:',nlocs,'nsorted:',nsorted)
+
+    if nlocs>nsorted:
+        entriestext+='(%s more...)\n' % (nlocs-nsorted)
+
+    return entriestext
+
 def main():
-    print('Looking back {} mins.'.format(args.time))
+    good=True
     db=Db()
- 
-    t0=db.timeago(args.time)
-    querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
+
+    # Setup query from CLI
 
     if args.start and args.end:
-        # NOTE: this includes associated entries
+        print('Window specified. This will include associated entries.')
         querytext='time_now>"{}" and time_now<"{}"'.format(args.start,args.end)
-        print(querytext)
 
+    elif args.start:
+        print('Start time specified. This will include associated entries.')
+        t1=db.timedelta(args.time,args.start)
+        querytext='time_now>"{}" and time_now<"{}"'.format(args.start,t1)
+
+    elif args.end:
+        print('End time specified. This will include associated entries.')
+        t0=db.timedelta(args.time*(-1),args.end)
+        querytext='time_now>"{}" and time_now<"{}"'.format(t0,args.end)
+
+    else:
+        print('Looking back {} mins.'.format(args.time))
+        t0=db.timedelta(args.time*(-1))
+        querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
+
+    # Now query and aggregate
+
+    print(querytext)
     geojson=db.extquery('cdi','latest',querytext)
-    if not geojson or len(geojson.features) < MINENTRIES:
-        print("Not enough entries found, stopping.")
+    nresp=len(geojson.features) 
+
+    if not geojson or nresp==0:
+        print("No entries found. Stopping.")
         exit()
 
     npts=len(geojson.features)
     aggregated=aggregate(geojson,1)
+    nlocs=len(aggregated)
+
+    entriestext=displayEntries(aggregated)
+
+    if nresp<args.minresp:
+        print("Only %s entries found. Stopping." % nresp)
+        print(entriestext)
+        exit()
+
+    print('Locating.')
     loc=locate_dyfi.locate(aggregated)
+    print('Done locating.')
+
     if not loc:
         print("No location found, stopping.")
+        print(entriestext)
         exit()
+
+    # Create display message
 
     mag=loc['properties']['mag']
     resid=loc['properties']['resid']
     (lon,lat)=loc['geometry']['coordinates']
 
-    results=Geoserve(lat,lon)
-    out='Location: '+str(results)+'\n'
-    out+='Number of responses: '+str(npts)+'\n'
-    if mag>8:
-        out+='Derived magnitude M{}, location is suspect.'.format(mag)+'\n'
-    if resid>1:
-        out+='resid={}, location is suspect.'.format(resid)+'\n'
+    print('Getting Regions from Geoserve.')
+    region=Regions(lat,lon)
+    print('Getting Places from Geoserve.')
+    places=Places(lat,lon)
+    print('Done.')
+
+    out='loc=%s\nnearest=%s\nlargest=%s\n' % (
+            region,places.nearest,places.largest)
+    out+='lat=%s lon=%s\n' % (lat,lon)
+    out+='mag=%s nresp=%s nlocs=%s resid=%s\n' % (mag,nresp,nlocs,resid)
+
+    if resid>2:
+        out+='Location and magnitude suspect.\n'
+
+    if not args.force:
+        check=checkfilter(mag,nresp,nlocs,resid)
+        if not check:
+            good=False
+
+    if not good:
+        out+='Suspect location, diagnostic only.\n'
+
+    out+=entriestext
 
     print('Results:')
     print(out)
@@ -63,9 +177,13 @@ def main():
         msg={'subject':'DYFI Autolocator','text':out}
         if isinstance(args.mail,str):
             msg['to']=args.mail
-            print('Mailing to '+args.mail)
-        else:
-            print('Mailing to default operator.')
+
+        if not good:
+            msg['subject']='DYFI Autolocator (suspect)'
+            msg['to']=config.mail['operator']
+
+        print('Sending mail.')
         mail.dyfimail(msg)
+        print('Done sending.')
 
 main()

@@ -13,8 +13,8 @@ aggreagate.py :  Module to take GeoJSON feature collection and return
 
 import math
 import geojson
-from modules.utm import OutOfRangeError,to_latlon,from_latlon
 import modules.cdi as cdi
+from modules.utm import OutOfRangeError,to_latlon,from_latlon
 
 PRECISION=4
 
