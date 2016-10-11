@@ -1,11 +1,7 @@
-#! /bin/python3
+#! /usr/bin/env python3
 
 import argparse
-from modules import Db
-from modules import aggregate
-from modules import locate_dyfi
-from modules import Geoserve
-from modules import mail
+from modules import Db,aggregate,locate_dyfi,Geoserve,mail,Plot
 
 MINENTRIES=5
 
