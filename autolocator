@@ -1,6 +1,9 @@
 #! /bin/python3
 
 import argparse
+import subprocess
+import json
+
 from modules.db import Db
 from modules.aggregate import aggregate
 from modules.geoserve.regions import Regions
@@ -9,6 +12,10 @@ from modules.geoserve.places import Places
 from modules.config import config
 from modules import locate_dyfi
 from modules import mail
+
+plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
+resultsfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
+imagefile='/home/shake/PROJECTS/Autolocator/latest.jpg'
 
 parser=argparse.ArgumentParser(
   description='Check the extended table for unknown entries and attempt to locate them.'
@@ -24,10 +31,14 @@ parser.add_argument('--mail',type=str,nargs='?',const=True,
 parser.add_argument('--minresp',type=int,default=5,
                     help='Minimum no. of responses for detection')
 parser.add_argument('--force',action='store_true',
-                    help='Minimum no. of responses for detection')
+                    help='Force results even if suspect')
 parser.add_argument('--test',action='store_true',
                     help='Testing regime')
+parser.add_argument('--plot',action='store_true',
+                    help='Plot the results and graph')
 args=parser.parse_args()
+
+print(args)
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
@@ -87,6 +98,21 @@ def displayEntries(aggregated):
         entriestext+='(%s more...)\n' % (nlocs-nsorted)
 
     return entriestext
+
+
+def saveresults(solution,aggregated,resultsfile):
+
+    results={
+        'type':'FeatureCollection',
+        'id':'Autolocator Result',
+        'properties':solution,
+        'features':aggregated
+        }
+
+    print('Writing results to',resultsfile)
+    with open(resultsfile,'w') as f:
+        json.dump(results,f,indent=2)
+
 
 def main():
     good=True
@@ -176,6 +202,21 @@ def main():
     print('Results:')
     print(out)
 
+    solution={
+            'lat':lat,
+            'lon':lon,
+            'mag':mag,
+            }
+
+    if aggregated:
+        print('Saving results to geojson.')
+        saveresults(solution,aggregated,resultsfile)
+
+    if args.plot:
+        print('Running',plotcommand,resultsfile)
+        subprocess.call([plotcommand,resultsfile])
+        print('Done with call.')
+
     if args.mail:
         msg={'subject':'DYFI Autolocator','text':out}
         if isinstance(args.mail,str):
@@ -185,8 +226,16 @@ def main():
             msg['subject']='DYFI Autolocator (suspect)'
             msg['to']=config.mail['operator']
 
+        if args.test:
+            msg['to']=config.mail['operator']
+
+        if args.plot:
+            msg['attachment']=imagefile
+
         print('Sending mail.')
         mail.dyfimail(msg)
         print('Done sending.')
+
+
 
 main()

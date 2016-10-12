@@ -1,9 +1,8 @@
 #! /usr/local/bin/python3
 
-import smtplib
-from email.mime.text import MIMEText
-
 from modules.config import config
+
+use_sendmail=False
 
 def dyfimail(p):
     """
@@ -25,7 +24,34 @@ Usage:
     if 'to' in p:
         msgto=p['to']
 
-    """
+    if use_sendmail:
+        sendmail(p)
+        return
+
+    from subprocess import Popen,PIPE
+    print('Mailer:subj:',msgsubj)
+    print('Mailer:to:',msgto)
+
+    command=[config.mail['mailbin'],'-s','"'+msgsubj+'"']
+    if 'attachment' in p:
+        command.append('-a')
+        command.append(p['attachment'])
+    command.append(msgto)
+
+    print('Mail command:',command)
+    mailer=Popen(
+            command,
+            stdin=PIPE,universal_newlines=True
+            )
+    mailer.communicate(p['text'])
+
+def sendmail(p):
+    import smtplib
+    from email.mime.text import MIMEText
+    from email.MIMEMultipart import MIMEMultipart
+    from email.MIMEText import MIMEText
+    from email.MIMEImage import MIMEImage
+
     msg=MIMEText(p['text'])
     msg['Subject']=msgsubj
     msg['From']=msgfrom
@@ -33,21 +59,16 @@ Usage:
     print('Sending:')
     print(msg)
 
+    if 'attachment' in p:
+        pass
+
     s=smtplib.SMTP(config.mail['smtp'])
     s.set_debuglevel(1)
     s.send_message(msg)
     print(s)
     s.quit()
-    """
 
-    from subprocess import Popen,PIPE
-    print('Mailer:subj:',msgsubj)
-    print('Mailer:to:',msgto)
-    mailer=Popen(
-            [config.mail['mailbin'],'-s',msgsubj,msgto],
-            stdin=PIPE,universal_newlines=True
-            )
-    mailer.communicate(p['text'])
+    return
 
 
 if __name__=='__main__':

@@ -1,0 +1,4 @@
+#! /bin/bash
+
+source /home/shake/Software/miniconda3/bin/activate mypy
+./plotlocator.py $1 $2 $3
