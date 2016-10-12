@@ -19,7 +19,7 @@ Usage:
         returns extended entries in geojson format.
         columns : column name, or list of columns, or comma-delimited list, or
             all : get all columns
-            cdi : get columns from db.CDICOLUMNS
+            cdi : get columns from db.cdicolumns
         table : table name, list of tables, or comma-delimited list, or
             (blank) : all extended tables
             latest : only the latest extended table
@@ -42,7 +42,7 @@ Usage:
     def __init__(self,dbconfigfile='/home/shake/db.json'):
 
         self.allcolumns=['subid','eventid','orig_id','suspect','region','usertime','time_now','latitude','longitude','geo_source','zip','zip_4','city','admin_region','country','street','name','email','phone','situation','building','asleep','felt','other_felt','motion','duration','reaction','response','stand','sway','creak','shelf','picture','furniture','heavy_appliance','walls','slide_1_foot','d_text','damage','building_details','comments','user_cdi','city_latitude','city_longitude','city_population','zip_latitude','zip_longitude','location','tzoffset','confidence','version','citydb','cityid']
-        self.cdicolumns=['subid','latitude','longitude','felt','other_felt','motion','reaction','stand','shelf','picture','furniture','damage']
+        self.cdicolumns=['subid','latitude','longitude','felt','other_felt','motion','reaction','stand','shelf','picture','furniture','damage','time_now']
 
         dbparams=json.load(open(dbconfigfile))
         EXT_MINYR=2003;
@@ -153,6 +153,14 @@ Simplest MySQL query with the raw query string, no formatting.
         feature=geojson.Feature(geometry=pt,properties=props)
         return(feature)
 
+    # Class method
+    def serialize_datetime(obj):
+
+        if isinstance(obj,datetime.datetime):
+            serial = obj.isoformat()
+            return serial
+
+
 if __name__=='__main__':
     import argparse
     parser=argparse.ArgumentParser(
@@ -182,6 +190,5 @@ if __name__=='__main__':
         results=db.rawquery(args.query)
 
     print(results)
-
 
 

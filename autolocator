@@ -3,6 +3,7 @@
 import argparse
 import subprocess
 import json
+import datetime
 
 from modules.db import Db
 from modules.aggregate import aggregate
@@ -12,6 +13,8 @@ from modules.geoserve.places import Places
 from modules.config import config
 from modules import locate_dyfi
 from modules import mail
+
+median_offset=200
 
 plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
 resultsfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
@@ -38,10 +41,10 @@ parser.add_argument('--plot',action='store_true',
                     help='Plot the results and graph')
 args=parser.parse_args()
 
-print(args)
+if args.test:
+    print(args)
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
-
 
 def checkfilter(mag,nresp,nlocs,resid):
     if mag<=5 and resid<1:
@@ -73,7 +76,7 @@ def displayEntries(aggregated):
     sortedlocs=sorted(aggregated,key=customSort,reverse=True)
     sortedlocs=sortedlocs[0:10]
 
-    entriestext='Responses:'
+    entriestext='Responses:\n'
     print('Getting location data from Geoserve...')
 
     for loc in sortedlocs:
@@ -153,6 +156,13 @@ def main():
     aggregated=aggregate(geojson,1)
     nlocs=len(aggregated)
 
+    times=gettimes(geojson)
+
+    if args.test:
+        #print(json.dumps(geojson,indent=2,default=Db.serialize_datetime))
+        #exit()
+        pass
+
     entriestext=displayEntries(aggregated)
 
     if nresp<args.minresp:
@@ -185,6 +195,11 @@ def main():
             region,places.nearest,places.largest)
     out+='lat=%s lon=%s\n' % (lat,lon)
     out+='mag=%s nresp=%s nlocs=%s resid=%s\n' % (mag,nresp,nlocs,resid)
+
+    out+='t_earliest=%s\nt_estimated=%s\n' % (
+            times['mintime'],
+            times['otime']
+            )
 
     if resid>2:
         out+='Location and magnitude suspect.\n'
@@ -237,5 +252,16 @@ def main():
         print('Done sending.')
 
 
+def gettimes(geojson):
+    mintime=None
+    features=geojson.features
+    for feature in features:
+        time=feature.properties['time_now']
+        if not mintime or mintime>time:
+            mintime=time
+
+    otime=mintime-datetime.timedelta(seconds=median_offset)
+
+    return { 'mintime':mintime,'otime':otime }
 
 main()
