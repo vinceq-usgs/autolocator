@@ -4,6 +4,9 @@ import argparse
 import subprocess
 import json
 import datetime
+import os
+import time
+import datetime
 
 from modules.db import Db
 from modules.aggregate import aggregate
@@ -17,24 +20,26 @@ from modules import mail
 median_offset=200
 
 plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
-resultsfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
 imagefile='/home/shake/PROJECTS/Autolocator/latest.jpg'
+latestfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
 
 parser=argparse.ArgumentParser(
   description='Check the extended table for unknown entries and attempt to locate them.'
 )
 parser.add_argument('--time',type=float,default=20,
                     help='Time to look back (default 20 mins)')
+parser.add_argument('--threshold',type=float,default=20,
+                    help='Wait between alarms (default 20 mins)')
 parser.add_argument('--start',type=str,
-                    help='Start time in the form "2016-01-01 00:00:00"')
+                    help='Start time in the form "2017-01-01 00:00:00"')
 parser.add_argument('--end',type=str,
-                    help='End time in the form "2016-01-01 00:00:00"')
+                    help='End time in the form "2017-01-01 00:00:00"')
 parser.add_argument('--mail',type=str,nargs='?',const=True,
                     help='Mail recipients if event is found')
-parser.add_argument('--minresp',type=int,default=5,
+parser.add_argument('--minresp',type=int,default=10,
                     help='Minimum no. of responses for detection')
 parser.add_argument('--force',action='store_true',
-                    help='Force results even if suspect')
+                    help='Force results even if running within wait time')
 parser.add_argument('--test',action='store_true',
                     help='Testing regime')
 parser.add_argument('--plot',action='store_true',
@@ -46,18 +51,24 @@ if args.test:
 
 columns=['felt','motion','reaction','stand','shelf','picture','furniture','damage']
 
+t_now=datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
+timestamp=int(time.time())
+print('Creating trigger at time:',t_now)
+resultsfile='/home/shake/PROJECTS/Autolocator/triggers/%s.geojson' % timestamp
+
 def checkfilter(mag,nresp,nlocs,resid):
     if mag<=5 and resid<1:
         return True
-    if resid>2.5:
+    if resid>2.5 and nresp<25:
         return False
-    if mag>9 and nresp<100:
+    if resid>3.0:
         return False
-    if mag>7 and nresp<50:
+
+    if mag>9 and nresp<50:
         return False
-    if mag>6 and nresp<30:
+    if mag>7 and nresp<25:
         return False
-    if mag>5.5 and nresp<20:
+    if mag>6 and nresp<20:
         return False
     return True
 
@@ -121,6 +132,20 @@ def main():
     good=True
     db=Db()
 
+    if args.threshold:
+        age=0
+        try:
+            mtime=os.stat(imagefile).st_mtime
+            age=(time.time()-mtime)/60
+            print('Previous run was',int(age),'mins ago.')
+        except:
+          pass
+
+        if age>0 and age<=args.threshold and not args.force:
+            print('Stopping run.')
+            exit()
+
+
     # Setup query from CLI
 
     if args.start and args.end:
@@ -152,6 +177,10 @@ def main():
         print("No entries found. Stopping.")
         exit()
 
+    if nresp<args.minresp:
+        print("Only %s entries found. Stopping." % nresp)
+        exit()
+
     npts=len(geojson.features)
     aggregated=aggregate(geojson,1)
     nlocs=len(aggregated)
@@ -164,11 +193,6 @@ def main():
         pass
 
     entriestext=displayEntries(aggregated)
-
-    if nresp<args.minresp:
-        print("Only %s entries found. Stopping." % nresp)
-        print(entriestext)
-        exit()
 
     print('Locating.')
     loc=locate_dyfi.locate(aggregated)
@@ -191,12 +215,12 @@ def main():
     places=Places(lat,lon)
     print('Done.')
 
-    out='loc=%s\nnearest=%s\nlargest=%s\n' % (
+    out='loc="%s"\nnearest="%s"\nlargest="%s"\n' % (
             region,places.nearest,places.largest)
     out+='lat=%s lon=%s\n' % (lat,lon)
     out+='mag=%s nresp=%s nlocs=%s resid=%s\n' % (mag,nresp,nlocs,resid)
 
-    out+='t_earliest=%s\nt_estimated=%s\n' % (
+    out+='t_earliest="%s"\nt_estimated="%s"\n' % (
             times['mintime'],
             times['otime']
             )
@@ -204,12 +228,10 @@ def main():
     if resid>2:
         out+='Location and magnitude suspect.\n'
 
-    if not args.force:
-        check=checkfilter(mag,nresp,nlocs,resid)
-        if not check:
-            good=False
-
+    suspect=0
+    good=checkfilter(mag,nresp,nlocs,resid)
     if not good:
+        suspect=1
         out+='Suspect location, diagnostic only.\n'
 
     out+=entriestext
@@ -221,6 +243,12 @@ def main():
             'lat':lat,
             'lon':lon,
             'mag':mag,
+            't_estimated':times['otime'].strftime('%Y-%m-%d %H:%M:%S'),
+            't_initial':times['mintime'].strftime('%Y-%m-%d %H:%M:%S'),
+            't_triggered':t_now,
+            'suspect':suspect,
+            'nresp':nresp,
+            'resid':resid
             }
 
     if aggregated:
