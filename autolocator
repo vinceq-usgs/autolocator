@@ -1,4 +1,4 @@
-#! /bin/python3
+#! /usr/bin/env python3
 
 import argparse
 import subprocess
@@ -10,12 +10,12 @@ import datetime
 
 from modules.db import Db
 from modules.aggregate import aggregate
+
+#import Db,aggregate,locate_dyfi,Geoserve,mail,Plot
+
 from modules.geoserve.regions import Regions
 from modules.geoserve.places import Places
-
 from modules.config import config
-from modules import locate_dyfi
-from modules import mail
 
 # Subtract this time from first entry to get estimated otime
 median_offset=200
