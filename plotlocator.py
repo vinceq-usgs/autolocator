@@ -19,7 +19,6 @@ def main():
 
     with open(args.resultfile,'r') as f:
         input=geojson.load(f)
-        print('Got',len(input.features),'points.')
 
     event=Event(input)
     mapparams=mapParams(input)
@@ -55,8 +54,6 @@ def Data(input):
     features=input['features']
     rfeatures=[x for x in features if 'magnitude' not in x['properties']]
     data.features=rfeatures
-
-    print('Now only',len(data.features),'features.')
 
     return(data)
 

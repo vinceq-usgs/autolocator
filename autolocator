@@ -17,6 +17,7 @@ from modules.config import config
 from modules import locate_dyfi
 from modules import mail
 
+# Subtract this time from first entry to get estimated otime
 median_offset=200
 
 plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
@@ -26,8 +27,8 @@ latestfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
 parser=argparse.ArgumentParser(
   description='Check the extended table for unknown entries and attempt to locate them.'
 )
-parser.add_argument('--time',type=float,default=20,
-                    help='Time to look back (default 20 mins)')
+parser.add_argument('--time',type=float,default=30,
+                    help='Time to look back (default 30 mins)')
 parser.add_argument('--threshold',type=float,default=20,
                     help='Wait between alarms (default 20 mins)')
 parser.add_argument('--start',type=str,
@@ -122,6 +123,10 @@ def saveresults(solution,aggregated,resultsfile):
         'properties':solution,
         'features':aggregated
         }
+
+    if args.test:
+        print('Test run, not saving to',resultsfile)
+        return
 
     print('Writing results to',resultsfile)
     with open(resultsfile,'w') as f:
@@ -289,7 +294,7 @@ def gettimes(geojson):
             mintime=time
 
     otime=mintime-datetime.timedelta(seconds=median_offset)
-
     return { 'mintime':mintime,'otime':otime }
+
 
 main()
