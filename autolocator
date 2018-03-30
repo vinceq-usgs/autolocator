@@ -10,6 +10,8 @@ import datetime
 
 from modules.db import Db
 from modules.aggregate import aggregate
+import modules.locate_dyfi as locate_dyfi
+import modules.mail as mail
 
 #import Db,aggregate,locate_dyfi,Geoserve,mail,Plot
 
