@@ -1,6 +1,6 @@
-#! /usr/local/bin/python3
+#! /usr/bin/env python3
 
-from modules.config import config
+from modules.config import Config
 
 use_sendmail=False
 
@@ -14,6 +14,8 @@ Usage:
     dyfimail({'subject':'x','to':'recipient','text':'body'})
 
     """
+
+    config=Config()
 
     msgsubj='DYFI Autolocator Alert'
     msgfrom=config.mail['operator']

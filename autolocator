@@ -17,7 +17,7 @@ import modules.mail as mail
 
 from modules.geoserve.regions import Regions
 from modules.geoserve.places import Places
-from modules.config import config
+from modules.config import Config 
 
 # Subtract this time from first entry to get estimated otime
 median_offset=200
@@ -25,6 +25,8 @@ median_offset=200
 plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
 imagefile='/home/shake/PROJECTS/Autolocator/latest.jpg'
 latestfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
+
+config=Config()
 
 parser=argparse.ArgumentParser(
   description='Check the extended table for unknown entries and attempt to locate them.'
@@ -126,9 +128,9 @@ def saveresults(solution,aggregated,resultsfile):
         'features':aggregated
         }
 
-    if args.test:
-        print('Test run, not saving to',resultsfile)
-        return
+#    if args.test:
+#        print('Test run, not saving to',resultsfile)
+#        return
 
     print('Writing results to',resultsfile)
     with open(resultsfile,'w') as f:
