@@ -58,7 +58,6 @@ def aggregate(featurecollection,resolution):
     for loc,pts in rawresults.items():
         intensity=cdi.calculate(pts)
                         
-        # geom=getBoundingPolygon(loc,resolutionMeters)        
         coords=getCoords(loc,resolutionMeters)
         props={
             'cdi' : intensity,
@@ -73,6 +72,7 @@ def aggregate(featurecollection,resolution):
 
     print('Aggregated %i pts into %i pts' % (npts,len(results)))
     return results
+
 
 def myFloor(x,multiple):
     """ 
@@ -89,8 +89,10 @@ def myFloor(x,multiple):
     y=x/multiple
     return int(math.floor(y) * multiple)
 
+
 def myCeil(x,multiple):
     return int(math.ceil(x/multiple) * multiple)
+
 
 def getAggregation(pt,resolutionMeters):
     geom=pt['geometry']['coordinates']
@@ -107,7 +109,8 @@ def getAggregation(pt,resolutionMeters):
     y0=myFloor(y,resolutionMeters)
     loc='{} {} {} {}'.format(x0,y0,zonenum,zoneletter)
     return loc
-    
+
+
 def getCoords(loc,resolutionMeters):
     """
     Returns a Point object of the center of the UTM location
@@ -122,35 +125,62 @@ def getCoords(loc,resolutionMeters):
     lon=round(lon,PRECISION)
     return (lon,lat)
 
-if __name__=='__main__':
-    import argparse
 
-    parser=argparse.ArgumentParser(
-              description='Get UTM aggregation for lat/lon pair.'
-              )
-    parser.add_argument('lat', type=str, 
-                                help='latitude OR UTM string')
-    parser.add_argument('lon', type=float,nargs='?', 
-                                help='longitude')
-    parser.add_argument('span', type=int,default=1,nargs='?', 
-                                help='UTM span (default 1km)')
-    args=parser.parse_args()
+def getUtmPolyFromString(utm,span):
+    """
 
-    if ' ' in args.lat:
-        print('Parsing '+args.lat+' as UTM string.')
-        coords=args.lat.split(' ');
-        e=float(coords[0])
-        n=float(coords[1])
-        zn=int(coords[2])
-        latlon=to_latlon(e,n,zn,coords[3])
-        print(latlon)
-        exit()
+    :synopsis: Compute the (lat/lon) bounds and center from a UTM string
+    :param utm: A UTM string
+    :param int span: The size of the UTM box in meters
+    :return: :py:obj:`dict`, see below
 
-    args.lat=float(args.lat)
-    if args.lat>90 or args.lat<-90:
-        print('Latitude out of bounds (inputs must be lat lon [span])')
-        exit()
-    pt=geojson.Feature(geometry=geojson.Point((args.lon,args.lat)))
-    agg=aggregate(geojson.FeatureCollection([pt]),args.span)
-    print(agg)
+    Get the bounding box polygon and center point for a UTM string suitable for plotting.
+
+    The return value has two keys:
+
+    ======    ========================
+    center    A GeoJSON Point object
+    bounds    A GeoJSON Polygon object
+    ======    ========================
+
+    """
+
+    x,y,zone,zoneletter=utm.split()
+    x=int(x)
+    y=int(y)
+    zone=int(zone)
+
+    # Compute bounds. Need to reverse-tuple here because the
+    # to_latlon function returns lat/lon and geojson requires lon/lat.
+    # Rounding needed otherwise lat/lon coordinates are arbitrarily long
+
+    ebound=zone*6-180
+    wbound=ebound-6
+
+    def _reverse(tup,eastborder=None):
+
+        (y,x)=tup
+        if eastborder and x>ebound:
+            x=ebound
+        elif x<wbound:
+            x=wbound
+        x=round(x,PRECISION)
+        y=round(y,PRECISION)
+        return (x,y)
+
+    p1=_reverse(to_latlon(x,y,zone,zoneletter))
+    p2=_reverse(to_latlon(x,y+span,zone,zoneletter))
+    p3=_reverse(to_latlon(x+span,y+span,zone,zoneletter),'e')
+    p4=_reverse(to_latlon(x+span,y,zone,zoneletter),'e')
+    bounds=geojson.Polygon([[p1,p2,p3,p4,p1]])
+
+    # Compute center
+    cx=int(x)+span/2
+    cy=int(y)+span/2
+    clat,clon=to_latlon(cx,cy,zone,zoneletter)
+    clat=round(clat,PRECISION)
+    clon=round(clon,PRECISION)
+    center=geojson.Point((clon,clat))
+
+    return ({'center':center,'bounds':bounds})
 

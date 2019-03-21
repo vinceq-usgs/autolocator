@@ -1,4 +1,16 @@
 #! /bin/bash
 
-source /home/shake/Software/miniconda3/bin/activate mypy
-./plotlocator.py $1 $2 $3
+# Usage: run_plot trigger.json output.png
+
+export HOME="/home/shake/PROJECTS/Autolocator"
+export LEAFLET="./leaflet"
+source /home/shake/Software/miniconda3/bin/activate dyfi
+
+rm -f $2
+
+cd $LEAFLET
+echo RUNNING $0 $1 $2
+./alviewer $1 $2
+#cp $2 $HOME/
+cd $HOME
+

@@ -117,6 +117,9 @@ def loopGrid(ipe,initloc,obs,gridstep,saveresults):
             # Now calculate the magnitude and residual for this trial
             # epicenter by iterating through each observation
             result = TRYLOCATIONF(ipe,obs)
+            if not result:
+                continue
+
             resid = result['resid']
             props = {
                 'mag' : result['mag'],
@@ -234,10 +237,17 @@ def trylocation_B(ipe,obs):
         dist = ob['properties']['_dist']
 
         trymag = ipe(ii,dist,True)
+
+        if trymag>8.1:
+            continue
+
         ob['properties']['_mag'] = trymag        
         #nresp = ob['properties']['nresp']
         totalmag += trymag
         totalwt +=  1
+
+    if totalwt==0:
+        return
 
     # Calculate the mean of M derived from observations
     # This is the M assigned to that trial epicenter
@@ -254,6 +264,9 @@ def trylocation_B(ipe,obs):
     totalresid2 = 0
     totalwt2 = 0
     for ob in obs:
+        if '_wt' not in ob['properties'] or '_mag' not in ob['properties']:
+            continue
+
         wt = ob['properties']['_wt']
         thismag = ob['properties']['_mag']
         totalresid2 += (wt * (thismag - meanmag))**2

@@ -4,3 +4,6 @@ auto.log
 config.yml
 *.log
 latest.*
+leaflet/latest.png
+output.png
+

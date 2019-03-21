@@ -46,7 +46,7 @@ Usage:
 
         dbparams=json.load(open(dbconfigfile))
         EXT_MINYR=2003;
-        EXT_MAXYR=2017;
+        EXT_MAXYR=2019;
 
         self.exttables=['extended_' + str(x) for x in
             (['pre'] + list(range(EXT_MINYR,EXT_MAXYR+1)))]

@@ -1,0 +1,98 @@
+#! /usr/bin/env python
+
+# Convert Autolocator geojson to *.geojson.js for use with viewer.html 
+
+import json
+import geojson
+import argparse
+import copy
+import subprocess
+
+import sys
+import os
+sys.path.insert(0,os.path.abspath(os.path.join(os.path.dirname(__file__),'..')))
+
+import modules.aggregate as aggregate
+#import dyfi.aggregate as aggregate
+#from dyfi.thirdparty.utm import from_latlon,to_latlon,OutOfRangeError
+
+
+parser=argparse.ArgumentParser(
+    prog='alviewer.py',
+    description='Convert Autolocator geojson for Leaflet Viewer'
+)
+parser.add_argument(
+    'inputfile',action='store',
+    help='geojson input file'
+)
+parser.add_argument(
+    'outputfile',action='store',
+    help='png output file'
+)
+
+
+
+def main(args):
+
+  inputfile=args.inputfile
+  outputjs=inputfile+'.js'
+  imagefile=args.outputfile
+
+  # Read geojson file
+  with open(inputfile,'r') as f:
+    inputdata=geojson.load(f)
+
+  data=geojson.FeatureCollection([])
+  data.id=inputdata.id
+  data.properties=copy.deepcopy(inputdata.properties)
+  data.features=[geojson.Feature(
+    id='Epicenter',
+    geometry=geojson.Point((inputdata.properties['lon'],inputdata.properties['lat'])),
+    properties={'name':'Estimated epicenter'})
+  ]
+
+  maxint=0
+  for feature in inputdata.features:
+
+    mygeom=myPolyFromUtm(feature.id)
+    myprops=copy.deepcopy(feature.properties)
+
+    myfeature=geojson.Feature(
+      id=feature.id,
+      geometry=mygeom,
+      properties=myprops)
+    data.features.append(myfeature)
+    
+    if myprops['cdi']>maxint:
+      maxint=myprops['cdi']
+
+  data.properties['maxint']=maxint
+
+  # convert to viewer geojson
+  outtext='data='+json.dumps(data,indent=2)
+
+  # save as geojson.js
+  with open(outputjs,'w') as f:
+    f.write(outtext)
+
+  # run phantomjs
+  commandList='phantomjs ALcapture.js %s %s' % (outputjs,imagefile)
+  result=subprocess.call(commandList.split(' '))
+  print('Output is',imagefile)
+
+
+  exit()
+
+
+def myPolyFromUtm(text):
+
+  mypoly=aggregate.getUtmPolyFromString(text,10000)
+  return mypoly['bounds']
+
+
+if __name__=='__main__':
+  args=parser.parse_args()
+  main(args)
+
+
+

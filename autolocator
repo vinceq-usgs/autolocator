@@ -23,7 +23,7 @@ from modules.config import Config
 median_offset=200
 
 plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
-imagefile='/home/shake/PROJECTS/Autolocator/latest.jpg'
+imagefile='/home/shake/PROJECTS/Autolocator/latest.png'
 latestfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
 
 config=Config()
@@ -39,6 +39,8 @@ parser.add_argument('--start',type=str,
                     help='Start time in the form "2017-01-01 00:00:00"')
 parser.add_argument('--end',type=str,
                     help='End time in the form "2017-01-01 00:00:00"')
+parser.add_argument('--forceunknown',action='store_true',
+                    help='Force taking only unknown entries')
 parser.add_argument('--mail',type=str,nargs='?',const=True,
                     help='Mail recipients if event is found')
 parser.add_argument('--minresp',type=int,default=10,
@@ -105,6 +107,7 @@ def displayEntries(aggregated):
             print('WARNING: Regions failed (Geoserve or network error?)')
             region='(%s,%s)' % (lat,lon)
 
+        print('Got region:',region)
         entriestext+='%s (i=%s, nresp=%s)\n' % (region,cdi,nresp)
 
     print('Done with Geoserve.')
@@ -176,6 +179,11 @@ def main():
         t0=db.timedelta(args.time*(-1))
         querytext='eventid="unknown" AND time_now>"{}"'.format(t0)
 
+    if args.forceunknown:
+        print('Only taking unknown events.')
+        if not 'eventid="unknown"' in querytext:
+            querytext+='AND eventid="unknown"'
+
     # Now query and aggregate
 
     print(querytext)
@@ -191,15 +199,10 @@ def main():
         exit()
 
     npts=len(geojson.features)
-    aggregated=aggregate(geojson,1)
+    aggregated=aggregate(geojson,10)
     nlocs=len(aggregated)
 
     times=gettimes(geojson)
-
-    if args.test:
-        #print(json.dumps(geojson,indent=2,default=Db.serialize_datetime))
-        #exit()
-        pass
 
     entriestext=displayEntries(aggregated)
 
@@ -237,6 +240,10 @@ def main():
     if resid>2:
         out+='Location and magnitude suspect.\n'
 
+#    if mag>15:
+#        print('M=%i, stopping.' % mag)
+#        exit()
+
     suspect=0
     good=checkfilter(mag,nresp,nlocs,resid)
     if not good:
@@ -265,8 +272,8 @@ def main():
         saveresults(solution,aggregated,resultsfile)
 
     if args.plot:
-        print('Running',plotcommand,resultsfile)
-        subprocess.call([plotcommand,resultsfile])
+        print('Running',plotcommand,resultsfile,imagefile)
+        subprocess.call([plotcommand,resultsfile,imagefile])
         print('Done with call.')
 
     if args.mail:
