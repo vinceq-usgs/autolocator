@@ -57,6 +57,8 @@ Usage:
           self.cursor=self.connector.cursor(dictionary=True)
         except:
           print('WARNING: Db could not open MySQL connection')
+          self.cursor=FakeCursor()
+
 
 
     def extquery(self,columns,table,text):
@@ -89,6 +91,8 @@ wrapper to query(), but converts output to geojson.
         results=[]
         for table in tables:
             result=self.query(table,columns,text)
+            if not result:
+                continue
             for rowdata in result:
                 rowgeojson=self.row2geojson(rowdata)
                 if not rowgeojson:
@@ -115,6 +119,7 @@ Simplest MySQL query with the raw query string, no formatting.
 
         """
         print("Query: "+text)
+
         self.cursor.execute(text)
         results=self.cursor.fetchall()
         return results
@@ -159,6 +164,16 @@ Simplest MySQL query with the raw query string, no formatting.
         if isinstance(obj,datetime.datetime):
             serial = obj.isoformat()
             return serial
+
+
+class FakeCursor():
+        # Create an object that knows the execute and fetchAll methods
+
+    def execute(self,text):
+        pass
+
+    def fetchall(self):
+        pass
 
 
 if __name__=='__main__':
