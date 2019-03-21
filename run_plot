@@ -2,9 +2,9 @@
 
 # Usage: run_plot trigger.json output.png
 
-export HOME="/home/shake/PROJECTS/Autolocator"
+export HOME="./Autolocator"
 export LEAFLET="./leaflet"
-source /home/shake/Software/miniconda3/bin/activate dyfi
+source activate al
 
 rm -f $2
 
