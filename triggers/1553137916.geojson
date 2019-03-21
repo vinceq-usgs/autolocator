@@ -1,0 +1,513 @@
+{
+  "features": [
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.1533,
+          28.5217
+        ]
+      },
+      "type": "Feature",
+      "id": "480000 3150000 17 R",
+      "properties": {
+        "_dist": 455.5576,
+        "nresp": 2,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.355904329540823
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          72.6224,
+          22.2733
+        ]
+      },
+      "type": "Feature",
+      "id": "250000 2460000 43 Q",
+      "properties": {
+        "_dist": 13278.4034,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -97.0673,
+          35.6333
+        ]
+      },
+      "type": "Feature",
+      "id": "670000 3940000 14 S",
+      "properties": {
+        "_dist": 1566.9025,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -117.1603,
+          32.853
+        ]
+      },
+      "type": "Feature",
+      "id": "480000 3630000 11 S",
+      "properties": {
+        "_dist": 3418.6596,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.1536,
+          28.7022
+        ]
+      },
+      "type": "Feature",
+      "id": "480000 3170000 17 R",
+      "properties": {
+        "_dist": 435.7236,
+        "nresp": 2,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.24432061891654
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.6435,
+          28.1602
+        ]
+      },
+      "type": "Feature",
+      "id": "530000 3110000 17 R",
+      "properties": {
+        "_dist": 490.9197,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.534265607869044
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.2566,
+          28.9728
+        ]
+      },
+      "type": "Feature",
+      "id": "470000 3200000 17 R",
+      "properties": {
+        "_dist": 407.8084,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.088423255116153
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -2.7856,
+          51.1363
+        ]
+      },
+      "type": "Feature",
+      "id": "510000 5660000 30 U",
+      "properties": {
+        "_dist": 6431.3823,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.153,
+          28.3411
+        ]
+      },
+      "type": "Feature",
+      "id": "480000 3130000 17 R",
+      "properties": {
+        "_dist": 475.4224,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.466288350790567
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -96.8442,
+          35.7197
+        ]
+      },
+      "type": "Feature",
+      "id": "690000 3950000 14 S",
+      "properties": {
+        "_dist": 1548.2936,
+        "nresp": 2,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.3574,
+          28.431
+        ]
+      },
+      "type": "Feature",
+      "id": "460000 3140000 17 R",
+      "properties": {
+        "_dist": 468.8294,
+        "nresp": 2,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.436179949370716
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -80.542,
+          28.0696
+        ]
+      },
+      "type": "Feature",
+      "id": "540000 3100000 17 R",
+      "properties": {
+        "_dist": 500.6876,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.584257582888955
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.2555,
+          28.5215
+        ]
+      },
+      "type": "Feature",
+      "id": "470000 3150000 17 R",
+      "properties": {
+        "_dist": 457.1628,
+        "nresp": 1,
+        "cdi": 1,
+        "_wt": 0.1,
+        "_mag": 5.15695256622712
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -84.8771,
+          34.4581
+        ]
+      },
+      "type": "Feature",
+      "id": "690000 3810000 16 S",
+      "properties": {
+        "_dist": 462.2922,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.154906772280341
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -77.3741,
+          35.6254
+        ]
+      },
+      "type": "Feature",
+      "id": "280000 3940000 18 S",
+      "properties": {
+        "_dist": 441.1249,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 5.556635176438879
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.2557,
+          28.6118
+        ]
+      },
+      "type": "Feature",
+      "id": "470000 3160000 17 R",
+      "properties": {
+        "_dist": 447.2725,
+        "nresp": 5,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.312857324334717
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.3577,
+          28.5213
+        ]
+      },
+      "type": "Feature",
+      "id": "460000 3150000 17 R",
+      "properties": {
+        "_dist": 458.971,
+        "nresp": 5,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.3814671695078005
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.2559,
+          28.702
+        ]
+      },
+      "type": "Feature",
+      "id": "470000 3170000 17 R",
+      "properties": {
+        "_dist": 437.4,
+        "nresp": 3,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.257265776409925
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -97.063,
+          35.8135
+        ]
+      },
+      "type": "Feature",
+      "id": "670000 3960000 14 S",
+      "properties": {
+        "_dist": 1569.347,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.2553,
+          28.4312
+        ]
+      },
+      "type": "Feature",
+      "id": "470000 3140000 17 R",
+      "properties": {
+        "_dist": 467.0595,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.4232433941452785
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.1534,
+          28.6119
+        ]
+      },
+      "type": "Feature",
+      "id": "480000 3160000 17 R",
+      "properties": {
+        "_dist": 445.6427,
+        "nresp": 8,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.300300289706854
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -111.8889,
+          40.7826
+        ]
+      },
+      "type": "Feature",
+      "id": "420000 4510000 12 T",
+      "properties": {
+        "_dist": 2931.8066,
+        "nresp": 2,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -97.1777,
+          35.635
+        ]
+      },
+      "type": "Feature",
+      "id": "660000 3940000 14 S",
+      "properties": {
+        "_dist": 1576.815,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.4603,
+          28.6112
+        ]
+      },
+      "type": "Feature",
+      "id": "450000 3160000 17 R",
+      "properties": {
+        "_dist": 451.1954,
+        "nresp": 2,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.34117692999573
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -82.6933,
+          28.9624
+        ]
+      },
+      "type": "Feature",
+      "id": "330000 3200000 17 R",
+      "properties": {
+        "_dist": 455.6949,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.391997019858127
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -82.8022,
+          29.3219
+        ]
+      },
+      "type": "Feature",
+      "id": "320000 3240000 17 R",
+      "properties": {
+        "_dist": 426.129,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.226477217031836
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.2562,
+          28.7923
+        ]
+      },
+      "type": "Feature",
+      "id": "470000 3180000 17 R",
+      "properties": {
+        "_dist": 427.5256,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.201305797130419
+      }
+    },
+    {
+      "geometry": {
+        "type": "Point",
+        "coordinates": [
+          -81.4599,
+          28.521
+        ]
+      },
+      "type": "Feature",
+      "id": "450000 3150000 17 R",
+      "properties": {
+        "_dist": 460.9906,
+        "nresp": 1,
+        "cdi": 2,
+        "_wt": 0.1,
+        "_mag": 6.395745999667979
+      }
+    }
+  ],
+  "type": "FeatureCollection",
+  "id": "Autolocator Result",
+  "properties": {
+    "resid": 0.2823,
+    "nresp": 51,
+    "t_estimated": "2019-03-08 23:06:06",
+    "suspect": 0,
+    "t_initial": "2019-03-08 23:09:26",
+    "mag": 6.0,
+    "lon": -80.4328,
+    "lat": 32.5714,
+    "t_triggered": "2019-03-21 03:11:56"
+  }
+}
