@@ -2,14 +2,13 @@
 
 # Usage: run_plot trigger.json output.png
 
-export HOME="./Autolocator"
 export LEAFLET="./leaflet"
 source activate al
 
 rm -f $2
 
 cd $LEAFLET
-echo RUNNING $0 $1 $2
+echo RUNNING $0 ../$1 $2
 ./alviewer ../$1 $2
 cp $2 ..
 cd ..
