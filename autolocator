@@ -142,7 +142,7 @@ def saveresults(solution,aggregated,resultsfile):
 
 def main():
     good=True
-    db=Db()
+    db=Db(config.db)
 
     if args.threshold:
         age=0

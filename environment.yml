@@ -1,0 +1,19 @@
+# This file is used for conda installation
+channels:
+- conda-forge
+- defaults
+- auto
+dependencies:
+#- codecov
+#- defusedxml
+- geojson
+- geopy
+#- numpy
+- phantomjs>=2.1.1
+- pytest
+#- pytest-cov
+- python=3.6
+- pyyaml
+#- sphinx-argparse>=0.2.1
+- pip:
+  - mysql-connector-python

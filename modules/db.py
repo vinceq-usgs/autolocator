@@ -9,12 +9,9 @@ class Db():
     """
 Interface for connecting to the MySQL database.
 
-Requirements:
-    A dbconfigfile in JSON format with the following keys: USER,PASSWORD,DATABASE. The default lives in '/home/shake/db.json.' Otherwise, specify the location when calling Db().
-
 Usage:
     from db import Db
-    db=Db([configfile.json])
+    db=Db([config.yml])
     results=db.extquery(columns,table,querytext) : 
         returns extended entries in geojson format.
         columns : column name, or list of columns, or comma-delimited list, or
@@ -39,12 +36,11 @@ Usage:
 
     """
 
-    def __init__(self,dbconfigfile='/home/shake/db.json'):
+    def __init__(self,dbparams):
 
         self.allcolumns=['subid','eventid','orig_id','suspect','region','usertime','time_now','latitude','longitude','geo_source','zip','zip_4','city','admin_region','country','street','name','email','phone','situation','building','asleep','felt','other_felt','motion','duration','reaction','response','stand','sway','creak','shelf','picture','furniture','heavy_appliance','walls','slide_1_foot','d_text','damage','building_details','comments','user_cdi','city_latitude','city_longitude','city_population','zip_latitude','zip_longitude','location','tzoffset','confidence','version','citydb','cityid']
         self.cdicolumns=['subid','latitude','longitude','felt','other_felt','motion','reaction','stand','shelf','picture','furniture','damage','time_now']
 
-        dbparams=json.load(open(dbconfigfile))
         EXT_MINYR=2003;
         EXT_MAXYR=2019;
 
@@ -52,12 +48,16 @@ Usage:
             (['pre'] + list(range(EXT_MINYR,EXT_MAXYR+1)))]
         self.latesttable=self.exttables[-1]
 
-        connector=mysql.connector.connect(
-            user=dbparams['USER'],
-            password=dbparams['PASSWORD'],
-            database=dbparams['DATABASE'])
-        self.connector=connector
-        self.cursor=self.connector.cursor(dictionary=True)
+        try:
+          connector=mysql.connector.connect(
+            user=dbparams['user'],
+            password=dbparams['password'],
+            database=dbparams['database'])
+          self.connector=connector
+          self.cursor=self.connector.cursor(dictionary=True)
+        except:
+          print('WARNING: Db could not open MySQL connection')
+
 
     def extquery(self,columns,table,text):
         """

@@ -5,7 +5,7 @@ class Config:
     def __init__(self,file='./config.yml'):
 
         with open(file,'r') as yamlfh:
-            configs=yaml.load(yamlfh)
+            configs=yaml.load(yamlfh,Loader=yaml.FullLoader)
 
         self.hash={}
 

@@ -7,21 +7,19 @@ This script pulls from the online USGS Geoserve webserver to determine a locatio
 
 REQUIREMENTS:
 
-Easiest to use miniconda installation. Make sure you have python3.
-The following packages may be installed using pip:
-- mysql
-- mysq-connector
-- pyyaml
-- geopy
+Easiest to install using conda. Run ./install.sh.
 
-#mysql.connector:
-#  - download from http://dev.mysql.com/get/Downloads/Connector-Python/mysql-connector-python-2.1.4.tar.gz
-#  - untar
-#  - python3 setup.py install
-#pyyaml:
-#  - download from http://pyyaml.org/download/pyyaml/PyYAML-3.12.tar.gz
-#geopy
+CONFIGURATION:
 
-link to an intensity color file e.g. lib/mmi.cpt
+This package requires config.yml (in package root), example below:
 
--  
+mail:
+        to: recipients@mail.to
+        operator: me@mail.to
+        smtp: smtp.mail.to
+        mailbin: mail
+db:
+        password: mysqlpassword
+        user: mysqluser
+        database: dyfidatabase
+
