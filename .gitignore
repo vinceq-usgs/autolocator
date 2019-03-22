@@ -7,4 +7,4 @@ config.yml
 latest.*
 leaflet/latest.png
 output.png
-
+triggers/*

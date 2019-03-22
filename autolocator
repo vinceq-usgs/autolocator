@@ -22,9 +22,8 @@ from modules.config import Config
 # Subtract this time from first entry to get estimated otime
 median_offset=200
 
-plotcommand='/home/shake/PROJECTS/Autolocator/run_plot'
-imagefile='/home/shake/PROJECTS/Autolocator/latest.png'
-latestfile='/home/shake/PROJECTS/Autolocator/latest.geojson'
+plotcommand='./run_plot'
+imagefile='./latest.png'
 
 config=Config()
 
@@ -61,7 +60,7 @@ columns=['felt','motion','reaction','stand','shelf','picture','furniture','damag
 t_now=datetime.datetime.utcnow().strftime('%Y-%m-%d %H:%M:%S')
 timestamp=int(time.time())
 print('Creating trigger at time:',t_now)
-resultsfile='/home/shake/PROJECTS/Autolocator/triggers/%s.geojson' % timestamp
+resultsfile='triggers/%s.geojson' % timestamp
 
 def checkfilter(mag,nresp,nlocs,resid):
     if mag<=5 and resid<1:
