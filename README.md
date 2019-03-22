@@ -13,6 +13,7 @@ CONFIGURATION:
 
 This package requires config.yml (in package root), example below:
 
+```
 mail:
         to: recipients@mail.to
         operator: me@mail.to
@@ -23,3 +24,4 @@ db:
         user: mysqluser
         database: dyfidatabase
 
+```
