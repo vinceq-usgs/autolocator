@@ -30,7 +30,6 @@ Usage:
 
     db.connector : ref to MySQL connector
     db.cursor : ref to MySQL cursor, for making custom queries
-    db.allcolumns : list of all columns in the database
     db.cdicolumns : list of columns used for calculating CDI
 
 
@@ -38,7 +37,6 @@ Usage:
 
     def __init__(self,dbparams):
 
-        self.allcolumns=['subid','eventid','orig_id','suspect','region','usertime','time_now','latitude','longitude','geo_source','zip','zip_4','city','admin_region','country','street','name','email','phone','situation','building','asleep','felt','other_felt','motion','duration','reaction','response','stand','sway','creak','shelf','picture','furniture','heavy_appliance','walls','slide_1_foot','d_text','damage','building_details','comments','user_cdi','city_latitude','city_longitude','city_population','zip_latitude','zip_longitude','location','tzoffset','confidence','version','citydb','cityid']
         self.cdicolumns=['subid','latitude','longitude','felt','other_felt','motion','reaction','stand','shelf','picture','furniture','damage','time_now']
 
         EXT_MINYR=2003;
@@ -169,11 +167,27 @@ Simplest MySQL query with the raw query string, no formatting.
 class FakeCursor():
         # Create an object that knows the execute and fetchAll methods
 
+    def __init__(self):
+        self.data=[]
+
+
     def execute(self,text):
-        pass
+        try:
+          with open('tests/testdataset.json','r') as f:
+            data=json.load(f)
+            self.data=data
+        except:
+          print('No data found.')
+
+        print('FakeCursor.execute got',len(self.data),'entries.')
+
+        f='%Y-%m-%dT%H:%M:%S'
+        for e in self.data:
+            e['time_now']=datetime.datetime.strptime(e['time_now'],f)
+
 
     def fetchall(self):
-        pass
+        return self.data
 
 
 if __name__=='__main__':
