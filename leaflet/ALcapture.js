@@ -11,6 +11,7 @@ var clipWidth = 200;
 var clipHeight = 200;
 var quality = 90;
 
+var keepHtmlOutput = 0;
 var fs = require("fs");
 var system = require("system");
 
@@ -71,7 +72,9 @@ page.open(tmpinput,function(status) {
     page.render(output, {'quality': quality});
 
     // If we make it to this point, delete the temporary file
-    fs.remove(tmpinput);
+    if (!keepHtmlOutput) {
+      fs.remove(tmpinput);
+    }
     phantom.exit(1);
 });
 
